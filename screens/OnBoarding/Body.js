@@ -17,6 +17,7 @@ export default function Body() {
     console.log(isValid, email)
   }
   function validateAndSetUser(string) {
+    if(string){
     let isValid = validator.isAlpha(string)
     if (isValid) {
       setName(string)
@@ -25,7 +26,7 @@ export default function Body() {
 
 
     console.log(isValid, username)
-  }
+  }}
   return (
     <View style={styles.container}>
       <View style={styles.inner}>
@@ -33,12 +34,13 @@ export default function Body() {
           Let us get to know you
         </Text>
         <TextInput placeholder="First Name" style={styles.textInput} onChangeText={value => validateAndSetUser(value.trim())} />
-
+        {!usernameValid && username != "" && <Text style={styles.textError}>Name is invalid</Text>}
         <TextInput placeholder="Email" style={styles.textInput} keyboardType="email-address" onChangeText={value => validateAndSetEmail(value.trim())} />
+        {!emailValid && email != "" && <Text style={styles.textError}>Email is invalid</Text>}
       </View>
       <View style={styles.btnArea}>
-        {!usernameValid && username != "" && <Text style={styles.textError}>Username is invalid</Text>}
-        {!emailValid && email != "" && <Text style={styles.textError}>Email is invalid</Text>}
+
+
 
         {usernameValid && emailValid &&
           <Pressable style={styles.button} onPress={()=>null}>

@@ -4,8 +4,8 @@ import validator from "validator";
 export default function Body() {
   const [email, setEmail] = useState("");
   const [emailValid, setEmailValid] = useState(false)
-  const [usernameValid, setNameValid] = useState(false)
-  const [username, setName] = useState("");
+  const [nameValid, setNameValid] = useState(false)
+  const [name, setName] = useState("");
 
   //not very functional, can be improved
   function validateAndSetEmail(string) {
@@ -14,7 +14,6 @@ export default function Body() {
       setEmail(string)
     }
     setEmailValid(isValid)
-    console.log(isValid, email)
   }
   function validateAndSetUser(string) {
     if(string){
@@ -25,7 +24,6 @@ export default function Body() {
     setNameValid(isValid)
 
 
-    console.log(isValid, username)
   }}
   return (
     <View style={styles.container}>
@@ -34,7 +32,7 @@ export default function Body() {
           Let us get to know you
         </Text>
         <TextInput placeholder="First Name" style={styles.textInput} onChangeText={value => validateAndSetUser(value.trim())} />
-        {!usernameValid && username != "" && <Text style={styles.textError}>Name is invalid</Text>}
+        {!nameValid && name != "" && <Text style={styles.textError}>Name is invalid</Text>}
         <TextInput placeholder="Email" style={styles.textInput} keyboardType="email-address" onChangeText={value => validateAndSetEmail(value.trim())} />
         {!emailValid && email != "" && <Text style={styles.textError}>Email is invalid</Text>}
       </View>
@@ -42,7 +40,7 @@ export default function Body() {
 
 
 
-        {usernameValid && emailValid &&
+        {nameValid && emailValid &&
           <Pressable style={styles.button} onPress={()=>null}>
             <Text style={styles.buttonText}>Next</Text>
           </Pressable>

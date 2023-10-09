@@ -1,19 +1,106 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 import OnBoarding from './screens/OnBoarding/OnBoarding';
+import Splash from './screens/Splash'
+import Profile from './screens/Profile';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as React from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
-  
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [userData, setUserData] = React.useState(null);
+  const [fromStorage, setFromStorage] = React.useState(false)
+  const getData = async () => {
+    if (userData) {
+      console.log(userData, "<<< userData available")
+      console.log(fromStorage, "<<<< fromstorage ... we dont need to store again if value is true")
+      if (!fromStorage) {
+        try {
+          await AsyncStorage.multiSet([
+            ['name', userData.name],
+            ['email', userData.email]
+          ]);
+          console.log("stored")
+          // setUserData({name,email})
+        } catch (e) {
+          console.error("error in storing data to async", e)
+        }
+      }
+    }
+    else {
+      console.log(userData, "<<< null ... will check storage")
+
+      let data = null;
+      let email;
+      let name;
+      try {
+        email = await AsyncStorage.getItem('email');
+        name = await AsyncStorage.getItem('name');
+        console.log("got it from storage ... user data", email, name)
+      } catch (e) {
+        console.error("error in getting data from async", e)
+      }
+      finally {
+        if (email && name) { setFromStorage(true); setUserData({ name, email }); }
+
+      }
+    }
+    setIsLoading(false)
+  }
+  // const getDataFromAsync = async () => {
+  //   // testing purposes
+
+  //     // custom logic
+
+  //     await getData();
+  //     setIsLoading(false);
+  //   }
+
+
+  React.useEffect(() => {
+    getData();
+  }, [userData]);
+
+  if (isLoading) {
+    // We haven't finished checking for the token yet
+    return <Splash />;
+  }
+
+  console.log("before retrun", userData)
+
   return (
-    <OnBoarding/>
-    // <OnBoardingBody/>
-    // <Footer/>
-    // <View style={styles.container}>
-    //   <Text>Open up App.js to start working on your app!</Text>
-    //   <StatusBar style="auto" />
-    // </View>
+    <NavigationContainer>
+      <Stack.Navigator>
+        {userData == null ? (
+          // No token found, user isn't signed in
+
+          <Stack.Screen
+            name="Onboarding"
+            component={OnBoarding}
+            options={{
+              title: 'OnBoarding',
+            }}
+            initialParams={{ setUserData }}
+          />
+
+        ) : (
+          // User is signed in
+          <Stack.Screen name="Profile" component={Profile} />
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
+// <OnBoardingBody/>
+// <Footer/>
+// <View style={styles.container}>
+//   <Text>Open up App.js to start working on your app!</Text>
+//   <StatusBar style="auto" />
+// </View>
 
 const styles = StyleSheet.create({
   container: {

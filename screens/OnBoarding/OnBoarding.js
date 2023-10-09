@@ -6,10 +6,11 @@ import {
     View, StyleSheet, Image,
     Pressable
 } from "react-native";
-import Body from "./Body";
 import logo from '../../img/LittleLemonLogo.png'
 import validator from "validator";
 import { useState } from "react"
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 
 function Header() {
@@ -22,11 +23,13 @@ function Header() {
 }
 
 
-export default function OnBoarding() {
+export default function OnBoarding({ navigation, route }) {
     const [email, setEmail] = useState("");
     const [emailValid, setEmailValid] = useState(false)
     const [nameValid, setNameValid] = useState(false)
     const [name, setName] = useState("");
+    const { setUserData} = route.params;
+
 
     //not very functional, can be improved
     function validateAndSetEmail(string) {
@@ -47,6 +50,7 @@ export default function OnBoarding() {
 
         }
     }
+    
 
     return (
         <KeyboardAvoidingView
@@ -69,7 +73,10 @@ export default function OnBoarding() {
 
 
                             {nameValid && emailValid &&
-                                <Pressable style={styles.button} onPress={() => null}>
+                                <Pressable style={styles.button} onPress={
+                                    ()=>
+                                    setUserData({name,email})
+                                }>
                                     <Text style={styles.buttonText}>Next</Text>
                                 </Pressable>
 

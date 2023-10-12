@@ -51,14 +51,7 @@ export default function App() {
     }
     setIsLoading(false)
   }
-  // const getDataFromAsync = async () => {
-  //   // testing purposes
 
-  //     // custom logic
-
-  //     await getData();
-  //     setIsLoading(false);
-  //   }
 
 
   React.useEffect(() => {
@@ -74,7 +67,10 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator
+       screenOptions={{
+    headerShown: false
+  }}>
         {userData == null ? (
           // No token found, user isn't signed in
 
@@ -89,18 +85,13 @@ export default function App() {
 
         ) : (
           // User is signed in
-          <Stack.Screen name="Profile" component={Profile} />
+          //passing userdata for now, ideally would pass an id for a db access
+          <Stack.Screen name="Profile" component={Profile} initialParams={{userData}} />
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-// <OnBoardingBody/>
-// <Footer/>
-// <View style={styles.container}>
-//   <Text>Open up App.js to start working on your app!</Text>
-//   <StatusBar style="auto" />
-// </View>
 
 const styles = StyleSheet.create({
   container: {

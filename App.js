@@ -38,6 +38,7 @@ export default function App() {
       let email;
       let name;
       try {
+        //hmmm
         email = await AsyncStorage.getItem('email');
         name = await AsyncStorage.getItem('name');
         console.log("got it from storage ... user data", email, name)

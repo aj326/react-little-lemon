@@ -14,15 +14,58 @@ import Checkbox from 'expo-checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from "react";
 import * as ImagePicker from 'expo-image-picker';
+import validator from "validator";
+
 //trouble getting data from asyncstorage
 export default function Profile({ navigation, route }) {
     const [isChecked_01, setChecked_01] = useState(false);
     const [isChecked_02, setChecked_02] = useState(false);
     const [isChecked_03, setChecked_03] = useState(false);
     const [isChecked_04, setChecked_04] = useState(false);
+    const [email, setEmail] = useState("");
+    const [emailValid, setEmailValid] = useState(false)
+    const [nameValid, setNameValid] = useState(false)
+    const [lastnameValid, setLastnameValid] = useState(false)
+
+    const [phoneValid, setPhoneValid] = useState(false)
+    const [name, setName] = useState("");
+    const [lastname, setLastname] = useState("")
+    const [phone, setPhone] = useState("")
     const userData = route.params.userData;
     const [image, setImage] = useState(null);
-    console.log(userData)
+
+    function validateField(string, field, flag) {
+        let isValid = false;
+        switch (field) {
+            case setEmail: {
+                isValid = validator.isEmail(string);
+                console.log("setEmail", string, field, flag)
+                break
+            }
+            case setPhone: { isValid = string.length == 10 && validator.isMobilePhone(string); break }
+            default: isValid = validator.isAlpha(string);
+        }
+        if (isValid) {
+            field(string)
+            console.log("field()", string, field, flag, isValid)
+        }
+        flag(isValid)
+        console.log("flag()", string, field, flag, email, phone, name, lastname)
+
+
+    }
+    useEffect(() => getData, [])
+    const getData = async () => {
+        AsyncStorage.multiGet(['lastname', 'phonenumber']).then(response => {
+            setLastname(response[0][1])
+            setPhone(response[1][1])
+        }).catch(e => console.error("error getting lastname and phone from async"))
+    }
+    const storeData = async () => {
+        AsyncStorage.multiSet([
+            ['lastname', lastname]
+        ])
+    }
     const pickImage = async () => {
         // No permissions request is necessary for launching the image library
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -35,6 +78,12 @@ export default function Profile({ navigation, route }) {
 
         if (!result.canceled) {
             setImage(result.assets[0].uri);
+            try {
+                await AsyncStorage.setItem('image', result.assets[0].uri)
+            }
+            catch (e) {
+                console.error("error storing image", e)
+            }
         }
     };
     // TODO
@@ -44,7 +93,7 @@ export default function Profile({ navigation, route }) {
     // Checkboxes (INACTIVE) DONE
     // Pressist Changes
     // Logout
-
+    console.log(email, phone, name, lastname)
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
@@ -54,7 +103,6 @@ export default function Profile({ navigation, route }) {
                     <Text style={styles.subText}>Avatar</Text>
 
 
-                    {/* make the group below horizontal */}
                     <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
                         {
                             image == null
@@ -76,14 +124,24 @@ export default function Profile({ navigation, route }) {
                     <View style={styles.textInputFieldsContainer}>
 
                         <Text style={styles.fieldText}>First Name</Text>
-                        <TextInput style={styles.textInput} placeholder={userData.name} keyboardType="default" />
+                        <TextInput style={styles.textInput} defaultValue={userData.name} keyboardType="default" onChangeText={val => validateField(val, setName, setNameValid)} />
+                        {!nameValid && name != "" && <Text style={styles.textError}>First Name is invalid</Text>}
 
                         <Text style={styles.fieldText}>Last Name</Text>
-                        <TextInput style={styles.textInput} keyboardType="default" />
+                        <TextInput style={styles.textInput} keyboardType="default" onChangeText={val => validateField(val, setLastname, setLastnameValid)} />
+                        {!nameValid && name != "" && <Text style={styles.textError}>Last Name is invalid</Text>}
+
+
+
                         <Text style={styles.fieldText} >Email</Text>
-                        <TextInput style={styles.textInput} keyboardType="email-address" placeholder={userData.email} />
+                        <TextInput style={styles.textInput} keyboardType="email-address" defaultValue={userData.email} onChangeText={val => validateField(val, setEmail, setEmailValid)} />
+                        {!emailValid && email != "" && <Text style={styles.textError}>Email is invalid</Text>}
+
                         <Text style={styles.fieldText}>Phone Number</Text>
-                        <TextInput style={styles.textInput} keyboardType="phone-pad" />
+                        <TextInput style={styles.textInput} keyboardType="phone-pad" onChangeText={val => validateField(val, setPhone, setPhoneValid)} />
+                        {!phoneValid && phone != "" && <Text style={styles.textError}>Phone is invalid</Text>}
+
+
                     </View>
 
                     <Text style={styles.headerText}>Email notifications</Text>
@@ -97,7 +155,7 @@ export default function Profile({ navigation, route }) {
                         />
                         <Text>Order Statuses</Text>
                     </View>
-                   
+
                     <View style={styles.checkboxContainer}>
                         <Checkbox
                             style={styles.checkbox}
@@ -130,9 +188,10 @@ export default function Profile({ navigation, route }) {
                         <Text style={styles.buttonTextLogout}>Logout</Text>
 
                     </Pressable>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-around',marginVertical:10,marginHorizontal:25
-                     }}>
-                        
+                    <View style={{
+                        flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10, marginHorizontal: 25
+                    }}>
+
                         <Pressable style={styles.discardChangesButton} onPress={pickImage}>
 
                             <Text style={styles.buttonText}>Discard Changes</Text>
@@ -167,6 +226,12 @@ const styles = StyleSheet.create({
         paddingTop: 30,
 
     },
+    textError: {
+        color: "#ec644b",
+        fontWeight: "bold",
+        marginBottom:1,
+        marginTop:-5
+    },
     checkboxContainer:
         { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
     textInput: {
@@ -180,17 +245,18 @@ const styles = StyleSheet.create({
     },
     headerText: {
         fontWeight: "500",
-        marginBottom: 10,
+        marginVertical: 10,
 
     },
     checkbox: {
         marginVertical: 4,
-        marginHorizontal:16
+        marginHorizontal: 16
     },
     subText: {
         color: '#acaebd',
         fontWeight: '600',
-        marginBottom: 5
+        marginBottom: 5,
+        fontSize: 12
     },
     changeButton: {
         height: 50,
@@ -202,7 +268,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#495e57',
         borderRadius: 10,
     },
-    saveChangesButton:{
+    saveChangesButton: {
         // height: 50,
         marginTop: 10,
         borderWidth: 2,
@@ -223,9 +289,9 @@ const styles = StyleSheet.create({
     },
     logoutButton: {
         // height: 50,
-        justifyContent:"center",
-        alignContent:"center",
-        alignItems:"center",
+        justifyContent: "center",
+        alignContent: "center",
+        alignItems: "center",
         marginVertical: 5,
         borderWidth: 2,
         paddingHorizontal: 30,

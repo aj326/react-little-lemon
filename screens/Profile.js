@@ -27,7 +27,7 @@ export default function Profile({ navigation, route }) {
     const [emailValid, setEmailValid] = useState(false)
     const [nameValid, setNameValid] = useState(false)
     const [lastnameValid, setLastnameValid] = useState(false)
-
+    const [loaded, setLoaded] = useState(false)
     const [phoneValid, setPhoneValid] = useState(false)
     const [name, setName] = useState("");
     const [lastname, setLastname] = useState("")
@@ -43,29 +43,56 @@ export default function Profile({ navigation, route }) {
                 console.log("setEmail", string, field, flag)
                 break
             }
-            case setPhone: { isValid = validator.isMobilePhone(string,'en-US'); break }
-            default: isValid = validator.isAlpha(string);
+            case setPhone: { console.log(string.replace(/\D/g, '')); isValid = validator.isMobilePhone(string.replace(/\D/g, ''), 'en-US'); console.log(isValid); break }
+            case setName:  isValid = validator.isAlpha(string);
+            case setLastname: isValid = validator.isAlpha(string);
         }
         if (isValid) {
             field(string)
             console.log("field()", string, field, flag, isValid)
         }
         flag(isValid)
-        console.log("flag()", string, field, flag, email, phone, name, lastname)
+        console.log("flag()", isValid, string, field, flag, email, phone, name, lastname)
 
 
     }
-    useEffect(() => getData, [])
+    // useEffect(() => getData,[])
     const getData = async () => {
-        AsyncStorage.multiGet(['lastname', 'phonenumber']).then(response => {
-            setLastname(response[0][1])
-            setPhone(response[1][1])
-        }).catch(e => console.error("error getting lastname and phone from async"))
+        console.log("getting data")
+        if (!loaded) {
+            console.log("calling multi get")
+            AsyncStorage.multiGet(['lastname', 'phone', 'image']).then(response => {
+                setLastname(response[0][1])
+                setPhone(response[1][1])
+                setImage(response[2][1])
+            }).catch(e => console.error("error getting lastname and phone from async: ", e))
+
+            console.log("concluded multi get", lastname, phone, image)
+            console.log("getting from name and email from props")
+            setName(userData.name)
+            setNameValid(true)
+            setEmail(userData.email)
+            setEmailValid(true)
+            setLoaded(true)
+        }
     }
     const storeData = async () => {
-        AsyncStorage.multiSet([
-            ['lastname', lastname]
-        ])
+        console.log(email, phone, name, lastname)
+        if(
+            email !=null&&
+            phone !=null&&
+            name !=null&&
+            lastname !=null
+        ){
+            console.log("all not null ... proceeding")
+        }
+
+        // await AsyncStorage.multiSet([
+        //     ['name',name],
+        //     ['email'],email,
+        //     ['lastname', lastname],
+        //     ['phone',phone]
+        // ]).catch(e =>console.error(`error storing data to async: ${e}. name: ${name}, email: ${email}, lastname: ${lastname}, phone: ${phone}`))
     }
     const pickImage = async () => {
         // No permissions request is necessary for launching the image library
@@ -75,7 +102,7 @@ export default function Profile({ navigation, route }) {
             aspect: [4, 3],
             quality: 1,
         });
-        console.log(result);
+        // console.log(result);
 
         if (!result.canceled) {
             setImage(result.assets[0].uri);
@@ -88,13 +115,13 @@ export default function Profile({ navigation, route }) {
         }
     };
     // TODO
-    // Valid phone number
     // Back button (INACTIVE)
-    // Profile image (NEED to store image)
-    // Checkboxes (INACTIVE) DONE
+    // Profile image (NEED to retrieve image)
     // Pressist Changes
     // Logout
-    console.log(email, phone, name, lastname)
+    // console.log(!lastnameValid && (lastname != "" ))
+    console.log("logic ops",phone!=null&&(!phoneValid && (phone != "")),phone)
+    getData()
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
@@ -108,7 +135,7 @@ export default function Profile({ navigation, route }) {
                         {
                             image == null
                                 ?
-                                <Avatar size={96} rounded title={userData.name[0]} containerStyle={{ backgroundColor: "#495e57" }} />
+                                <Avatar size={96} rounded title={name[0]} containerStyle={{ backgroundColor: "#495e57" }} />
                                 :
                                 <Image resizeMode="center" source={{ uri: image }} style={styles.image} />
                         }
@@ -125,24 +152,24 @@ export default function Profile({ navigation, route }) {
                     <View style={styles.textInputFieldsContainer}>
 
                         <Text style={styles.fieldText}>First Name</Text>
-                        <TextInput style={styles.textInput} defaultValue={userData.name} keyboardType="default" onChangeText={val => validateField(val, setName, setNameValid)} />
+                        <TextInput style={styles.textInput} defaultValue={name} keyboardType="default" onChangeText={val => validateField(val, setName, setNameValid)} />
                         {!nameValid && name != "" && <Text style={styles.textError}>First Name is invalid</Text>}
 
                         <Text style={styles.fieldText}>Last Name</Text>
                         <TextInput style={styles.textInput} keyboardType="default" onChangeText={val => validateField(val, setLastname, setLastnameValid)} />
-                        {!nameValid && name != "" && <Text style={styles.textError}>Last Name is invalid</Text>}
+                        {lastname!=null && (!lastnameValid && (lastname != "")) && <Text style={styles.textError}>Last Name is invalid</Text>}
 
 
 
                         <Text style={styles.fieldText} >Email</Text>
-                        <TextInput style={styles.textInput} keyboardType="email-address" defaultValue={userData.email} onChangeText={val => validateField(val, setEmail, setEmailValid)} />
+                        <TextInput style={styles.textInput} keyboardType="email-address" defaultValue={email} onChangeText={val => validateField(val, setEmail, setEmailValid)} />
                         {!emailValid && email != "" && <Text style={styles.textError}>Email is invalid</Text>}
 
                         <Text style={styles.fieldText}>Phone Number</Text>
-                        <MaskedTextInput style={styles.textInput} 
-                        mask="(999) 999-9999"
-                        keyboardType="phone-pad" onChangeText={val => validateField(val, setPhone, setPhoneValid)} />
-                        {!phoneValid && phone != "" && <Text style={styles.textError}>Phone is invalid</Text>}
+                        <MaskedTextInput style={styles.textInput}
+                            mask="(999) 999-9999"
+                            keyboardType="phone-pad" onChangeText={val => validateField(val, setPhone, setPhoneValid)} />
+                        {(phone!=null&&(!phoneValid && (phone != ""))) && <Text style={styles.textError}>Phone is invalid</Text>}
 
 
                     </View>
@@ -186,25 +213,27 @@ export default function Profile({ navigation, route }) {
                         />
                         <Text>Newsletter</Text>
                     </View>
-                    <Pressable style={styles.logoutButton} onPress={pickImage}>
+                    <Pressable style={styles.logoutButton} onPress>
 
                         <Text style={styles.buttonTextLogout}>Logout</Text>
 
                     </Pressable>
-                    <View style={{
+                    
+                    {(email !=null&&phone !=null&&name !=null&&lastname !=null)&&<View style={{
                         flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10, marginHorizontal: 25
                     }}>
 
-                        <Pressable style={styles.discardChangesButton} onPress={pickImage}>
+                        <Pressable style={styles.discardChangesButton} onPress>
 
                             <Text style={styles.buttonText}>Discard Changes</Text>
 
                         </Pressable>
-                        <Pressable style={styles.saveChangesButton}>
+                        
+            <Pressable style={styles.saveChangesButton} onPress={storeData}>
                             <Text style={styles.buttonText}>Save Changes </Text>
                         </Pressable>
 
-                    </View>
+                    </View>}
 
                 </View>
             </TouchableWithoutFeedback>
@@ -232,8 +261,8 @@ const styles = StyleSheet.create({
     textError: {
         color: "#ec644b",
         fontWeight: "bold",
-        marginBottom:1,
-        marginTop:-5
+        marginBottom: 1,
+        marginTop: -5
     },
     checkboxContainer:
         { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },

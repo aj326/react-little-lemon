@@ -9,6 +9,7 @@ import {
     Image,
     StyleSheet
 } from "react-native";
+import { MaskedTextInput } from "react-native-mask-text";
 import { Avatar } from '@rneui/themed';
 import Checkbox from 'expo-checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -42,7 +43,7 @@ export default function Profile({ navigation, route }) {
                 console.log("setEmail", string, field, flag)
                 break
             }
-            case setPhone: { isValid = string.length == 10 && validator.isMobilePhone(string); break }
+            case setPhone: { isValid = validator.isMobilePhone(string,'en-US'); break }
             default: isValid = validator.isAlpha(string);
         }
         if (isValid) {
@@ -138,7 +139,9 @@ export default function Profile({ navigation, route }) {
                         {!emailValid && email != "" && <Text style={styles.textError}>Email is invalid</Text>}
 
                         <Text style={styles.fieldText}>Phone Number</Text>
-                        <TextInput style={styles.textInput} keyboardType="phone-pad" onChangeText={val => validateField(val, setPhone, setPhoneValid)} />
+                        <MaskedTextInput style={styles.textInput} 
+                        mask="(999) 999-9999"
+                        keyboardType="phone-pad" onChangeText={val => validateField(val, setPhone, setPhoneValid)} />
                         {!phoneValid && phone != "" && <Text style={styles.textError}>Phone is invalid</Text>}
 
 

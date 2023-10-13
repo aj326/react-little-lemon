@@ -99,6 +99,7 @@ export default function Profile({ navigation, route }) {
             ['lastname', lastname==null?"":lastname],
             ['phone',phone==null?"":phone]
         ]).catch(e =>console.error(`error storing data to async: ${e}. name: ${name}, email: ${email}, lastname: ${lastname}, phone: ${phone}`))
+        setInitialVals({name,email,lastname,phone})
     console.log("stored vals")
     }
     const pickImage = async () => {

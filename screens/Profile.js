@@ -33,6 +33,7 @@ export default function Profile({ navigation, route }) {
     const [lastname, setLastname] = useState("")
     const [phone, setPhone] = useState("")
     const userData = route.params.userData;
+    const [initialVals,setInitialVals]=useState(null)
     const [image, setImage] = useState(null);
 
     function validateField(string, field, flag) {
@@ -43,7 +44,7 @@ export default function Profile({ navigation, route }) {
                 console.log("setEmail", string, field, flag)
                 break
             }
-            case setPhone: { console.log(string.replace(/\D/g, '')); isValid = validator.isMobilePhone(string.replace(/\D/g, ''), 'en-US'); console.log(isValid); break }
+            case setPhone: { string=string.replace(/\D/g, '');console.log(string); isValid = validator.isMobilePhone(string, 'en-US'); console.log(isValid); break }
             case setName:  isValid = validator.isAlpha(string);
             case setLastname: isValid = validator.isAlpha(string);
         }
@@ -51,6 +52,9 @@ export default function Profile({ navigation, route }) {
             field(string)
             console.log("field()", string, field, flag, isValid)
         }
+        // else{
+        //     if(field ===setPhone) field("")
+        // }
         flag(isValid)
         console.log("flag()", isValid, string, field, flag, email, phone, name, lastname)
 
@@ -61,7 +65,7 @@ export default function Profile({ navigation, route }) {
         console.log("getting data")
         if (!loaded) {
             console.log("calling multi get")
-            AsyncStorage.multiGet(['lastname', 'phone', 'image']).then(response => {
+            await AsyncStorage.multiGet(['lastname', 'phone', 'image']).then(response => {
                 setLastname(response[0][1])
                 setPhone(response[1][1])
                 setImage(response[2][1])
@@ -74,25 +78,28 @@ export default function Profile({ navigation, route }) {
             setEmail(userData.email)
             setEmailValid(true)
             setLoaded(true)
+            console.log(name,email)
+            setInitialVals({name,email,phone,lastname})
         }
     }
     const storeData = async () => {
-        console.log(email, phone, name, lastname)
-        if(
-            email !=null&&
-            phone !=null&&
-            name !=null&&
-            lastname !=null
-        ){
-            console.log("all not null ... proceeding")
-        }
+        // console.log(email, phone, name, lastname)
+        // if(
+        //     email !=null&&
+        //     phone !=null&&
+        //     name !=null&&
+        //     lastname !=null
+        // ){
+        //     console.log("all not null ... proceeding")
+        // }
 
-        // await AsyncStorage.multiSet([
-        //     ['name',name],
-        //     ['email'],email,
-        //     ['lastname', lastname],
-        //     ['phone',phone]
-        // ]).catch(e =>console.error(`error storing data to async: ${e}. name: ${name}, email: ${email}, lastname: ${lastname}, phone: ${phone}`))
+        await AsyncStorage.multiSet([
+            ['name',name],
+            ['email',email],
+            ['lastname', lastname==null?"":lastname],
+            ['phone',phone==null?"":phone]
+        ]).catch(e =>console.error(`error storing data to async: ${e}. name: ${name}, email: ${email}, lastname: ${lastname}, phone: ${phone}`))
+    console.log("stored vals")
     }
     const pickImage = async () => {
         // No permissions request is necessary for launching the image library
@@ -120,8 +127,9 @@ export default function Profile({ navigation, route }) {
     // Pressist Changes
     // Logout
     // console.log(!lastnameValid && (lastname != "" ))
-    console.log("logic ops",phone!=null&&(!phoneValid && (phone != "")),phone)
+    // console.log("logic ops",phone!=null&&(!phoneValid && (phone != "")),phone)
     getData()
+    console.log("initvals",initialVals)
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
@@ -156,20 +164,22 @@ export default function Profile({ navigation, route }) {
                         {!nameValid && name != "" && <Text style={styles.textError}>First Name is invalid</Text>}
 
                         <Text style={styles.fieldText}>Last Name</Text>
-                        <TextInput style={styles.textInput} keyboardType="default" onChangeText={val => validateField(val, setLastname, setLastnameValid)} />
-                        {lastname!=null && (!lastnameValid && (lastname != "")) && <Text style={styles.textError}>Last Name is invalid</Text>}
+                        <TextInput style={styles.textInput} keyboardType="default" defaultValue={lastname} onChangeText={val => validateField(val, setLastname, setLastnameValid)} />
+                        {(!lastnameValid && lastname!="")||(lastname!=null) && (!lastnameValid && (lastname != "")) && <Text style={styles.textError}>Last Name is invalid</Text>}
 
 
 
                         <Text style={styles.fieldText} >Email</Text>
-                        <TextInput style={styles.textInput} keyboardType="email-address" defaultValue={email} onChangeText={val => validateField(val, setEmail, setEmailValid)} />
+                        <TextInput style={styles.textInput} 
+                        keyboardType="email-address" defaultValue={email} onChangeText={val => validateField(val, setEmail, setEmailValid)} />
                         {!emailValid && email != "" && <Text style={styles.textError}>Email is invalid</Text>}
 
                         <Text style={styles.fieldText}>Phone Number</Text>
-                        <MaskedTextInput style={styles.textInput}
+                        <TextInput style={styles.textInput}
+                            defaultValue={phone}
                             mask="(999) 999-9999"
                             keyboardType="phone-pad" onChangeText={val => validateField(val, setPhone, setPhoneValid)} />
-                        {(phone!=null&&(!phoneValid && (phone != ""))) && <Text style={styles.textError}>Phone is invalid</Text>}
+                        {(!phoneValid && phone!="")||(phone!=null) && (!phoneValid && (phone != "")) && <Text style={styles.textError}>Phone is invalid</Text>}
 
 
                     </View>
@@ -219,21 +229,26 @@ export default function Profile({ navigation, route }) {
 
                     </Pressable>
                     
-                    {(email !=null&&phone !=null&&name !=null&&lastname !=null)&&<View style={{
+                   <View style={{
                         flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10, marginHorizontal: 25
                     }}>
 
-                        <Pressable style={styles.discardChangesButton} onPress>
+                        <Pressable style={styles.discardChangesButton} onPress={()=>{
+                            setName(initialVals.name)
+                            setEmail(initialVals.email)
+                            setPhone(initialVals.phone)
+                            setLastname(initialVals.lastname)
+                        }}>
 
                             <Text style={styles.buttonText}>Discard Changes</Text>
 
                         </Pressable>
                         
-            <Pressable style={styles.saveChangesButton} onPress={storeData}>
+                        {initialVals!=null && (email !=initialVals.email||phone !=initialVals.phone||name !=initialVals.name||lastname !=initialVals.lastname)&&<Pressable style={styles.saveChangesButton} onPress={storeData}>
                             <Text style={styles.buttonText}>Save Changes </Text>
-                        </Pressable>
+                        </Pressable>}
 
-                    </View>}
+                    </View>
 
                 </View>
             </TouchableWithoutFeedback>

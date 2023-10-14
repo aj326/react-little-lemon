@@ -9,7 +9,6 @@ import {
     Image,
     StyleSheet
 } from "react-native";
-import { MaskedTextInput } from "react-native-mask-text";
 import { Avatar } from '@rneui/themed';
 import Checkbox from 'expo-checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -33,9 +32,9 @@ export default function Profile({ navigation, route }) {
     const [lastname, setLastname] = useState("")
     const [phone, setPhone] = useState("")
     const userData = route.params.userData;
-    const [initialVals,setInitialVals]=useState(null)
+    const [initialVals, setInitialVals] = useState(null)
     const [image, setImage] = useState(null);
-    const { setUserData} = route.params;
+    const { setUserData } = route.params;
 
 
     function validateField(string, field, flag) {
@@ -46,8 +45,8 @@ export default function Profile({ navigation, route }) {
                 console.log("setEmail", string, field, flag)
                 break
             }
-            case setPhone: { string=string.replace(/\D/g, '');console.log(string); isValid = validator.isMobilePhone(string, 'en-US'); console.log(isValid); break }
-            case setName:  isValid = validator.isAlpha(string);
+            case setPhone: { string = string.replace(/\D/g, ''); console.log(string); isValid = validator.isMobilePhone(string, 'en-US'); console.log(isValid); break }
+            case setName: isValid = validator.isAlpha(string);
             case setLastname: isValid = validator.isAlpha(string);
         }
         if (isValid) {
@@ -62,10 +61,93 @@ export default function Profile({ navigation, route }) {
 
 
     }
-    const clearAll = ()=>{
-        try{AsyncStorage.clear();
-            setUserData(null)}
-        catch(e){console.error("error clearing data",e)}
+
+    function EmailNotifications() {
+        return (<><Text style={styles.headerText}>Email notifications</Text>
+
+            <View style={styles.checkboxContainer}>
+                <Checkbox
+                    style={styles.checkbox}
+                    value={isChecked_01}
+                    onValueChange={setChecked_01}
+                    color={isChecked_01 ? '#495e57' : undefined}
+                />
+                <Text>Order Statuses</Text>
+            </View>
+
+            <View style={styles.checkboxContainer}>
+                <Checkbox
+                    style={styles.checkbox}
+                    value={isChecked_02}
+                    onValueChange={setChecked_02}
+                    color={isChecked_02 ? '#495e57' : undefined}
+                />
+                <Text>Password changes</Text>
+            </View>
+            <View style={styles.checkboxContainer}>
+                <Checkbox
+                    style={styles.checkbox}
+                    value={isChecked_03}
+                    onValueChange={setChecked_03}
+                    color={isChecked_03 ? '#495e57' : undefined}
+                />
+                <Text>Special offers</Text>
+            </View>
+            <View style={styles.checkboxContainer}>
+                <Checkbox
+                    style={styles.checkbox}
+                    value={isChecked_04}
+                    onValueChange={setChecked_04}
+                    color={isChecked_04 ? '#495e57' : undefined}
+                />
+                <Text>Newsletter</Text>
+            </View></>)
+    }
+    function ProfileActions() {
+        return (<>
+            <Pressable style={styles.logoutButton} onPress={clearAll
+            }>
+
+                <Text style={styles.buttonTextLogout}>Logout</Text>
+
+            </Pressable>
+
+
+            {initialVals != null && (email != initialVals.email || phone != initialVals.phone || name != initialVals.name || lastname != initialVals.lastname) && <View style={{
+                flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10, marginHorizontal: 25
+            }}>
+
+                <Pressable style={styles.discardChangesButton} onPress={() => {
+                    setName(initialVals.name)
+                    setEmail(initialVals.email)
+                    setPhone(initialVals.phone)
+                    setLastname(initialVals.lastname)
+                }}>
+
+                    <Text style={styles.buttonText}>Discard Changes</Text>
+
+                </Pressable>
+                {(phoneValid && emailValid && lastnameValid && nameValid) && <Pressable style={styles.saveChangesButton} onPress={storeData}>
+                    <Text style={styles.buttonText}>Save Changes </Text>
+                </Pressable>}
+
+            </View>}
+        </>)
+    }
+    const clearAll = () => {
+        try {
+            AsyncStorage.clear();
+            setUserData(null)
+        }
+        catch (e) { console.error("error clearing data", e) }
+    }
+    const clearImage = () =>{
+        try{
+            AsyncStorage.removeItem('image')
+            setImage(null)
+        }
+        catch (e) { console.error("error clearing image", e) }
+
     }
     // useEffect(() => getData,[])
     const getData = async () => {
@@ -73,8 +155,8 @@ export default function Profile({ navigation, route }) {
         if (!loaded) {
             console.log("calling multi get")
             await AsyncStorage.multiGet(['lastname', 'phone', 'image']).then(response => {
-                setLastname(response[0][1]===null?"":response[0][1])
-                setPhone(response[1][1]===null?"":response[1][1])
+                setLastname(response[0][1] === null ? "" : response[0][1])
+                setPhone(response[1][1] === null ? "" : response[1][1])
                 setImage(response[2][1])
             }).catch(e => console.error("error getting lastname and phone and img from async: ", e))
 
@@ -84,30 +166,22 @@ export default function Profile({ navigation, route }) {
             setNameValid(true)
             setEmail(userData.email)
             setEmailValid(true)
+            if (lastname != "") { setLastnameValid(true) }
+            if (phone != "") { setPhoneValid(true) }
             setLoaded(true)
-            console.log(name,email)
-            setInitialVals({name,email,phone,lastname})
+            console.log(name, email)
+            setInitialVals({ name, email, phone, lastname })
         }
     }
     const storeData = async () => {
-        // console.log(email, phone, name, lastname)
-        // if(
-        //     email !=null&&
-        //     phone !=null&&
-        //     name !=null&&
-        //     lastname !=null
-        // ){
-        //     console.log("all not null ... proceeding")
-        // }
-
         await AsyncStorage.multiSet([
-            ['name',name],
-            ['email',email],
-            ['lastname', lastname==null?"":lastname],
-            ['phone',phone==null?"":phone]
-        ]).catch(e =>console.error(`error storing data to async: ${e}. name: ${name}, email: ${email}, lastname: ${lastname}, phone: ${phone}`))
-        setInitialVals({name,email,lastname,phone})
-    console.log("stored vals")
+            ['name', name],
+            ['email', email],
+            ['lastname', lastname == null ? "" : lastname],
+            ['phone', phone == null ? "" : phone]
+        ]).catch(e => console.error(`error storing data to async: ${e}. name: ${name}, email: ${email}, lastname: ${lastname}, phone: ${phone}`))
+        setInitialVals({ name, email, lastname, phone })
+        console.log("stored vals")
     }
     const pickImage = async () => {
         // No permissions request is necessary for launching the image library
@@ -129,15 +203,9 @@ export default function Profile({ navigation, route }) {
             }
         }
     };
-    // TODO
-    // Back button (INACTIVE)
-    // Profile image (NEED to retrieve image)
-    // Pressist Changes
-    // Logout
-    // console.log(!lastnameValid && (lastname != "" ))
-    // console.log("logic ops",phone!=null&&(!phoneValid && (phone != "")),phone)
+
     getData()
-    console.log("initvals",initialVals)
+    // console.log("initvals", initialVals)
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
@@ -151,7 +219,7 @@ export default function Profile({ navigation, route }) {
                         {
                             image == null
                                 ?
-                                <Avatar size={96} rounded title={name[0]} containerStyle={{ backgroundColor: "#495e57" }} />
+                                <Avatar size={96} rounded title={`${name[0]}${lastname}`} containerStyle={{ backgroundColor: "#495e57" }} />
                                 :
                                 <Image resizeMode="center" source={{ uri: image }} style={styles.image} />
                         }
@@ -160,11 +228,12 @@ export default function Profile({ navigation, route }) {
                             <Text style={styles.buttonText}>Change</Text>
 
                         </Pressable>
-                        <Pressable style={styles.removeButton}>
+                        <Pressable style={styles.removeButton} onPress={clearImage}>
                             <Text style={styles.buttonText}>Remove </Text>
                         </Pressable>
 
                     </View>
+                    {/* <UserInfo/> */}
                     <View style={styles.textInputFieldsContainer}>
 
                         <Text style={styles.fieldText}>First Name</Text>
@@ -173,13 +242,13 @@ export default function Profile({ navigation, route }) {
 
                         <Text style={styles.fieldText}>Last Name</Text>
                         <TextInput style={styles.textInput} keyboardType="default" defaultValue={lastname} onChangeText={val => validateField(val, setLastname, setLastnameValid)} />
-                        {!lastnameValid && lastname!="" && <Text style={styles.textError}>Last Name is invalid</Text>}
+                        {!lastnameValid && lastname != "" && <Text style={styles.textError}>Last Name is invalid</Text>}
 
 
 
                         <Text style={styles.fieldText} >Email</Text>
-                        <TextInput style={styles.textInput} 
-                        keyboardType="email-address" defaultValue={email} onChangeText={val => validateField(val, setEmail, setEmailValid)} />
+                        <TextInput style={styles.textInput}
+                            keyboardType="email-address" defaultValue={email} onChangeText={val => validateField(val, setEmail, setEmailValid)} />
                         {!emailValid && email != "" && <Text style={styles.textError}>Email is invalid</Text>}
 
                         <Text style={styles.fieldText}>Phone Number</Text>
@@ -187,78 +256,13 @@ export default function Profile({ navigation, route }) {
                             defaultValue={phone}
                             mask="(999) 999-9999"
                             keyboardType="phone-pad" onChangeText={val => validateField(val, setPhone, setPhoneValid)} />
-                        {!phoneValid && phone!="" && <Text style={styles.textError}>Phone is invalid</Text>}
+                        {!phoneValid && phone != "" && <Text style={styles.textError}>Phone is invalid</Text>}
 
 
                     </View>
+                    <EmailNotifications />
 
-                    <Text style={styles.headerText}>Email notifications</Text>
-
-                    <View style={styles.checkboxContainer}>
-                        <Checkbox
-                            style={styles.checkbox}
-                            value={isChecked_01}
-                            onValueChange={setChecked_01}
-                            color={isChecked_01 ? '#495e57' : undefined}
-                        />
-                        <Text>Order Statuses</Text>
-                    </View>
-
-                    <View style={styles.checkboxContainer}>
-                        <Checkbox
-                            style={styles.checkbox}
-                            value={isChecked_02}
-                            onValueChange={setChecked_02}
-                            color={isChecked_02 ? '#495e57' : undefined}
-                        />
-                        <Text>Password changes</Text>
-                    </View>
-                    <View style={styles.checkboxContainer}>
-                        <Checkbox
-                            style={styles.checkbox}
-                            value={isChecked_03}
-                            onValueChange={setChecked_03}
-                            color={isChecked_03 ? '#495e57' : undefined}
-                        />
-                        <Text>Special offers</Text>
-                    </View>
-                    <View style={styles.checkboxContainer}>
-                        <Checkbox
-                            style={styles.checkbox}
-                            value={isChecked_04}
-                            onValueChange={setChecked_04}
-                            color={isChecked_04 ? '#495e57' : undefined}
-                        />
-                        <Text>Newsletter</Text>
-                    </View>
-                    <Pressable style={styles.logoutButton} onPress={clearAll
-                        }>
-
-                        <Text style={styles.buttonTextLogout}>Logout</Text>
-
-                    </Pressable>
-                    
-                   <View style={{
-                        flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10, marginHorizontal: 25
-                    }}>
-
-                        <Pressable style={styles.discardChangesButton} onPress={()=>{
-                            setName(initialVals.name)
-                            setEmail(initialVals.email)
-                            setPhone(initialVals.phone)
-                            setLastname(initialVals.lastname)
-                        }}>
-
-                            <Text style={styles.buttonText}>Discard Changes</Text>
-
-                        </Pressable>
-                        
-                        {initialVals!=null && (email !=initialVals.email||phone !=initialVals.phone||name !=initialVals.name||lastname !=initialVals.lastname)&&<Pressable style={styles.saveChangesButton} onPress={storeData}>
-                            <Text style={styles.buttonText}>Save Changes </Text>
-                        </Pressable>}
-
-                    </View>
-
+                    <ProfileActions />
                 </View>
             </TouchableWithoutFeedback>
         </KeyboardAvoidingView>

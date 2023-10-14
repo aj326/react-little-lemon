@@ -87,7 +87,7 @@ export default function App() {
         ) : (
           // User is signed in
           //passing userdata for now, ideally would pass an id for a db access
-          <Stack.Screen name="Profile" component={Profile} initialParams={{userData}} />
+          <Stack.Screen name="Profile" component={Profile} initialParams={{userData,setUserData}} />
         )}
       </Stack.Navigator>
     </NavigationContainer>

@@ -35,6 +35,8 @@ export default function Profile({ navigation, route }) {
     const userData = route.params.userData;
     const [initialVals,setInitialVals]=useState(null)
     const [image, setImage] = useState(null);
+    const { setUserData} = route.params;
+
 
     function validateField(string, field, flag) {
         let isValid = false;
@@ -59,6 +61,11 @@ export default function Profile({ navigation, route }) {
         console.log("flag()", isValid, string, field, flag, email, phone, name, lastname)
 
 
+    }
+    const clearAll = ()=>{
+        try{AsyncStorage.clear();
+            setUserData(null)}
+        catch(e){console.error("error clearing data",e)}
     }
     // useEffect(() => getData,[])
     const getData = async () => {
@@ -224,7 +231,8 @@ export default function Profile({ navigation, route }) {
                         />
                         <Text>Newsletter</Text>
                     </View>
-                    <Pressable style={styles.logoutButton} onPress>
+                    <Pressable style={styles.logoutButton} onPress={clearAll
+                        }>
 
                         <Text style={styles.buttonTextLogout}>Logout</Text>
 

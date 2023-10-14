@@ -1,8 +1,9 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
-import OnBoarding from './screens/OnBoarding/OnBoarding';
+import OnBoarding from './screens/OnBoarding';
 import Splash from './screens/Splash'
 import Profile from './screens/Profile';
+import Home from './screens/Home';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -87,7 +88,10 @@ export default function App() {
         ) : (
           // User is signed in
           //passing userdata for now, ideally would pass an id for a db access
+          <>
+          <Stack.Screen name="Home" component={Home}/>
           <Stack.Screen name="Profile" component={Profile} initialParams={{userData,setUserData}} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

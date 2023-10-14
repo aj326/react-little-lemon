@@ -73,10 +73,10 @@ export default function Profile({ navigation, route }) {
         if (!loaded) {
             console.log("calling multi get")
             await AsyncStorage.multiGet(['lastname', 'phone', 'image']).then(response => {
-                setLastname(response[0][1])
-                setPhone(response[1][1])
+                setLastname(response[0][1]===null?"":response[0][1])
+                setPhone(response[1][1]===null?"":response[1][1])
                 setImage(response[2][1])
-            }).catch(e => console.error("error getting lastname and phone from async: ", e))
+            }).catch(e => console.error("error getting lastname and phone and img from async: ", e))
 
             console.log("concluded multi get", lastname, phone, image)
             console.log("getting from name and email from props")
@@ -173,7 +173,7 @@ export default function Profile({ navigation, route }) {
 
                         <Text style={styles.fieldText}>Last Name</Text>
                         <TextInput style={styles.textInput} keyboardType="default" defaultValue={lastname} onChangeText={val => validateField(val, setLastname, setLastnameValid)} />
-                        {(!lastnameValid && lastname!="")||(lastname!=null) && (!lastnameValid && (lastname != "")) && <Text style={styles.textError}>Last Name is invalid</Text>}
+                        {!lastnameValid && lastname!="" && <Text style={styles.textError}>Last Name is invalid</Text>}
 
 
 
@@ -187,7 +187,7 @@ export default function Profile({ navigation, route }) {
                             defaultValue={phone}
                             mask="(999) 999-9999"
                             keyboardType="phone-pad" onChangeText={val => validateField(val, setPhone, setPhoneValid)} />
-                        {(!phoneValid && phone!="")||(phone!=null) && (!phoneValid && (phone != "")) && <Text style={styles.textError}>Phone is invalid</Text>}
+                        {!phoneValid && phone!="" && <Text style={styles.textError}>Phone is invalid</Text>}
 
 
                     </View>

@@ -35,7 +35,6 @@ export default function App() {
     else {
       console.log(userData, "<<< null ... will check storage")
 
-      let data = null;
       let email;
       let name;
       try {

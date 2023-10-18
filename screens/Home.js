@@ -7,7 +7,7 @@ import hero from "../img/HeroImage.jpg";
 import placholder from "../img/Placeholder_view_vector.png"
 import { Ionicons } from '@expo/vector-icons';
 import Splash from "./Splash";
-import { storeDataToDB, createTable, dropTable, getDataFromDB } from "./database";
+import { storeDataToDB, createTable, dropTable, getDataFromDB } from "../database";
 
 
 
@@ -46,15 +46,15 @@ export default function Home({ route }) {
                 await createTable();
                 // 2. Check if data was already stored
                 let menuItems = await getDataFromDB();
-                console.log(menuItems, menuItems.length, "after getDataFromDB")
+                // console.log(menuItems, menuItems.length, "after getDataFromDB")
 
                 if (!menuItems.length) {
-                    console.log("fetching")
+                    // console.log("fetching")
                     // Fetching menu from URL
                     const response = await fetch(API_URL);
                     menuItems = await response.json();
                     menuItems = menuItems.menu
-                    console.log(menuItems, "after fetch")
+                    // console.log(menuItems, "after fetch")
 
                     // Storing into database
                     await storeDataToDB(menuItems);

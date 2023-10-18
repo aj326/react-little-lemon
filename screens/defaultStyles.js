@@ -14,8 +14,12 @@ export const defaultStyles = StyleSheet.create({
         // flex: 1,
         backgroundColor: '#dee3e9',
         justifyContent:"center",
+        // alignContent:"",
         flexDirection: 'row',
         paddingHorizontal:15,
+        paddingVertical:7,
+        marginTop:5
+        // height:96
         //   display:''
     },
     logo: {
@@ -37,7 +41,7 @@ export const defaultStyles = StyleSheet.create({
         flex: 0.8,
         justifyContent: 'space-around',
         backgroundColor: "#cbd2d9",
-        marginTop: 10
+        paddingTop: 10
     },
     footerContainer: {
         flex: 0.2,

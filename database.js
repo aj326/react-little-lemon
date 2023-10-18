@@ -3,24 +3,19 @@ import * as SQLite from 'expo-sqlite';
 
 const db = SQLite.openDatabase('little_lemon.db');
 
-export async function storeDataToDB(menuItems) {
+export function storeDataToDB(menuItems) {
+    db.transaction((tx) => {
+        tx.executeSql(
+            `insert into menuitems (name, description, price, category, image) values ${menuItems.map(
+                (item) => `("${item.name}", "${item.description}", "${item.price}", "${item.category}", "${item.image}")`
+            )
+                .join(', ')}`
 
+            ,
 
-    return new Promise((resolve) => {
-
-        db.transaction((tx) => {
-            tx.executeSql(
-                `insert into menuitems (name, description, price, category, image) values ${menuItems.map(
-                    (item) => `("${item.name}", "${item.description}", "${item.price}", "${item.category}", "${item.image}")`
-                )
-                    .join(', ')}`
-
-                ,
-
-                [], (_, { rows }) => console.log(rows), (_, e) => console.error("error in insert values", e));
-        }
-        ), resolve;
-    });
+            [], (_, { rows }) => console.log(rows), (_, e) => console.error("error in insert values", e));
+    }
+    )
 }
 
 export async function createTable() {

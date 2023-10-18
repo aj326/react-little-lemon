@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, Pressable, FlatList } from "react-native";
+import { View, Text, StyleSheet, Image, Pressable, FlatList, ScrollView } from "react-native";
 import { Header } from "./Header";
 import { defaultStyles } from "./defaultStyles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -7,6 +7,7 @@ import hero from "../img/HeroImage.jpg";
 import placholder from "../img/Placeholder_view_vector.png"
 import { Ionicons } from '@expo/vector-icons';
 import Splash from "./Splash";
+import { Alert } from "react-native";
 import { storeDataToDB, createTable, dropTable, getDataFromDB } from "../database";
 
 
@@ -16,10 +17,14 @@ import { storeDataToDB, createTable, dropTable, getDataFromDB } from "../databas
 
 export default function Home({ route }) {
     const [data, setData] = useState(null)
+    const [categories,setCategories]=useState(null)
+    // const [selectedCategories,setSelectedCategories]=useState(null)
+
     const [isLoading, setIsLoading] = useState(true)
     const API_URL = 'https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json';
     const [avatarImage, setAvatarImage] = useState(null)
-
+    const userData = route.params.userData;
+    const [filterSelections, setFilterSelections] = useState(null)
     const avatarImageCall = async () => await AsyncStorage.getItem('image').then(response => setAvatarImage(response))
 
     avatarImageCall()
@@ -35,7 +40,11 @@ export default function Home({ route }) {
             }
         }, dependencies);
     }
-
+    const handleFiltersChange = async (item) => {
+        const arrayCopy = {...filterSelections};
+        arrayCopy[item] = !filterSelections[item];
+        setFilterSelections(arrayCopy);
+      };
 
     useEffect(() => {
         (async () => {
@@ -54,27 +63,33 @@ export default function Home({ route }) {
                     const response = await fetch(API_URL);
                     menuItems = await response.json();
                     menuItems = menuItems.menu
-                    // console.log(menuItems, "after fetch")
+                    console.log(menuItems, "after fetch")
 
                     // Storing into database
-                    await storeDataToDB(menuItems);
+                    storeDataToDB(menuItems);
 
                 }
+                console.log("setting variables")
 
                 setData(menuItems);
+                setCategories([... new Set(menuItems.map(x=>x.category))])
+                // setFilterSelections()
+                const filters = categories.reduce((o, key) => ({ ...o, [key]: false}), {})
+                setFilterSelections(filters)
+                console.log(filterSelections) 
                 setIsLoading(false)
             } catch (e) {
                 // Handle error
                 Alert.alert(e.message);
             }
         })();
-    }, []);
+    }, [isLoading]);
 
 
     const Item = ({ title, image, description, price, category }) => {
         // console.log("category",category)
         return (
-            <View >
+            <View>
                 <Text style={styles.itemTitleText}>{title}</Text>
                 <View style={styles.itemDetailsContainer}>
                     <View style={{
@@ -90,12 +105,33 @@ export default function Home({ route }) {
                 </View></View>
         );
     }
+    
+            // categories.forEach(element => {
+            //     console.log("hello",element)
+            // });
+
+                        
+                
+            
+            // <Pressable style={styles.categoryBtn}>
+            //             <Text style={styles.categoryBtnText}>Drinks</Text>
+            //         </Pressable>
+    function capitalizeText(string){
+        return string.charAt(0).toUpperCase() + string.slice(1)
+    }
     function MenuCategories() {
         return (
             <View>
                 <Text style={styles.sectionText}>order for delivery!</Text>
-                <View style={styles.menuCategories}>
-                    <Pressable style={styles.categoryBtn}>
+
+                <ScrollView contentContainerStyle={styles.menuCategories} horizontal={true}>
+                    {            categories.map(item=>    
+                                <Pressable style={filterSelections[item]?styles.categoryBtnSelected:styles.categoryBtnNotSelected} onPress={()=>handleFiltersChange(item)}>
+                        <Text style={styles.categoryBtnText}>{capitalizeText(item)}</Text>
+                    </Pressable>
+                    )}
+                    { console.log(filterSelections)}
+                    {/* <Pressable style={styles.categoryBtn}>
                         <Text style={styles.categoryBtnText}>Starters</Text>
                     </Pressable>
                     <Pressable style={styles.categoryBtn}>
@@ -106,10 +142,12 @@ export default function Home({ route }) {
                     </Pressable>
                     <Pressable style={styles.categoryBtn}>
                         <Text style={styles.categoryBtnText}>Drinks</Text>
-                    </Pressable>
+                    </Pressable> */}
 
-                </View>
+                    
+                </ScrollView>
             </View>
+
         )
     }
 
@@ -130,13 +168,13 @@ export default function Home({ route }) {
             </View>
         )
     }
-    if (isLoading && data == null) {
+    if (isLoading) {
         return (<Splash />)
     }
-    // console.log(avatarImage)
+    // console.log(new Set(data.map(x=>x.category))) 
     return (
         <View style={defaultStyles.rootContainer}>
-            <Header style={defaultStyles.header} avatar={avatarImage} />
+            <Header style={defaultStyles.header} avatar={avatarImage} name={userData.name} />
             <HeroCardWithSearch />
             <MenuCategories />
             {/* <MenuItems/> */}
@@ -178,15 +216,16 @@ const styles = StyleSheet.create({
         borderColor: "grey"
     },
     heroContainer: {
-        marginTop: 5,
+        paddingTop: 5,
         backgroundColor: '#495e57',
         padding: 15,
 
     },
     menuCategories: {
-        flexDirection: "row",
+        // flexDirection: "row",
+        flexGrow: 1,
         justifyContent: "space-evenly",
-        paddingBottom: 25,
+        // paddingBottom: 8,
         borderBottomWidth: 1,
         borderColor: 'grey'
     },
@@ -213,19 +252,25 @@ const styles = StyleSheet.create({
         alignSelf: "flex-end",
         borderRadius: 10
     },
-    categoryBtn: {
+    categoryBtnSelected: {
+        borderRadius: 15,
+        backgroundColor: "#f4ce14",
+        padding: 10,
+        marginHorizontal:10
+    },
+    categoryBtnNotSelected: {
         borderRadius: 15,
         backgroundColor: "#edefee",
         padding: 10,
+        marginHorizontal:10
     },
     categoryBtnText: {
         color: "#495e57",
         fontWeight: "bold"
     },
     sectionText: {
-        paddingTop: 30,
-        paddingBottom: 10,
-        // paddingLeft: 20,
+        paddingVertical: 12,
+        paddingLeft: 10,
         fontSize: 20,
         color: '#000000',
         justifyContent: 'center',

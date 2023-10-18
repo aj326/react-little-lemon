@@ -1,9 +1,13 @@
-import { Text, View, Image, StyleSheet } from "react-native";
+import { Text, View, Image, StyleSheet, Pressable } from "react-native";
 import logo from '../img/LittleLemonLogo.png';
 import { defaultStyles } from "./defaultStyles";
+import { Avatar } from '@rneui/themed';
+import { useNavigation } from '@react-navigation/native';
 
 
-export function Header({ avatar }) {
+
+export function Header({ avatar, name }) {
+        const navigation = useNavigation();
     function LittleLemonHeaderLogoAndText() {
         return (
             <View style={{ flexDirection: "row", marginHorizontal: 25, }}>
@@ -18,10 +22,17 @@ export function Header({ avatar }) {
             {avatar != null ?
                 <>
                     <LittleLemonHeaderLogoAndText />
-                    <Image resizeMode="center" source={{ uri: avatar }} style={styles.profileAvatarImage} />
+                    <Pressable onPress={() => navigation.navigate('Profile')}>
+                        <Image resizeMode="center" source={{ uri: avatar }} style={styles.profileAvatarImage} />
+                    </Pressable>
                 </>
                 :
-                <LittleLemonHeaderLogoAndText />
+                <>
+                    <LittleLemonHeaderLogoAndText />
+                    <Pressable onPress={() => navigation.navigate('Profile')}>
+                        <Avatar size={64} rounded title={`${name[0]}`} containerStyle={{ backgroundColor: "#495e57" }} />
+                    </Pressable>
+                </>
             }
         </View>
     );
@@ -34,7 +45,9 @@ const styles = StyleSheet.create(
             alignItems: "center",
             justifyContent: 'flex-end',
             flexDirection: 'row',
-            paddingHorizontal: 15
+            paddingHorizontal: 15,
+            paddingVertical: 7,
+            marginTop: 5
             // alignContent:"space-evenly"
             //   display:''
         },

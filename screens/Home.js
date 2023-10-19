@@ -56,6 +56,7 @@ export default function Home({ route }) {
     // const [selectedCategories,setSelectedCategories]=useState(null)
 
     const [isLoading, setIsLoading] = useState(true)
+    const [initLoad,setInitLoad]=useState(false)
     const API_URL = 'https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json';
     const [avatarImage, setAvatarImage] = useState(null)
     const userData = route.params.userData;
@@ -115,6 +116,7 @@ export default function Home({ route }) {
                 const filters = categories.reduce((o, key) => ({ ...o, [key]: false}), {})
                 setFilterSelections(filters)
                 setIsLoading(false)
+                setInitLoad(true)
             } catch (e) {
                 // Handle error
                 Alert.alert(e.message);
@@ -217,7 +219,7 @@ export default function Home({ route }) {
     }
 
 
-    if (isLoading) {
+    if (!initLoad) {
         return (<Splash />)
     }
     // console.log(new Set(data.map(x=>x.category))) 
@@ -233,6 +235,8 @@ export default function Home({ route }) {
                 data={data}
                 renderItem={({ item }) => <Item title={item.name} image={item.image} description={item.description} price={item.price} category={item.category} />}
                 keyExtractor={item => item.name}
+                refreshing={isLoading}
+                onRefresh={()=>setIsLoading(true)}
             />
 
         </SafeAreaView>

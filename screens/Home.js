@@ -1,23 +1,58 @@
-import { View, Text, StyleSheet, Image, Pressable, FlatList, ScrollView } from "react-native";
+import { View, SafeAreaView, Text, StyleSheet, Image, Pressable, FlatList, ScrollView ,TouchableWithoutFeedback,Keyboard,KeyboardAvoidingView} from "react-native";
 import { Header } from "./Header";
 import { defaultStyles } from "./defaultStyles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useState, useEffect } from "react";
+import { useState, useEffect,useRef ,useCallback,useMemo} from "react";
 import hero from "../img/HeroImage.jpg";
 import placholder from "../img/Placeholder_view_vector.png"
 import { Ionicons } from '@expo/vector-icons';
 import Splash from "./Splash";
 import { Alert } from "react-native";
-import { storeDataToDB, createTable, dropTable, getDataFromDB } from "../database";
+import { storeDataToDB, createTable, dropTable, getDataFromDB,filterByQueryAndCategories } from "../database";
+import debounce from 'lodash.debounce';
+import { Searchbar } from 'react-native-paper';
 
 
 
+function HeroCardWithSearch({...rest}) {
+    return (
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'} >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                        <View style={styles.heroContainer}>
+
+            <Text style={styles.titleText}>Little Lemon</Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 15 }}>
+                <View style={{ flexDirection: "column", flex: 0.75 }}>
+                    <Text style={styles.subTitleText}>Chicago</Text>
+                    <Text style={styles.copyText}>We are a family owned restaurant, focused on traditional recipes served with a modern twist.</Text>
+                </View>
+                <Image source={hero} style={styles.heroImage} resizeMode="cover" />
+            </View>
+            <Searchbar
+    {...rest}
+    placeholder="Search"
+    placeholderTextColor="#495e57"
+    
+    style={styles.searchBar}
+    iconColor="#495e57"
+    inputStyle={{ color: '#495e57' }}
+    elevation={0}
+  />
+
+            </View>
+            </TouchableWithoutFeedback>
+
+</KeyboardAvoidingView>
+
+    )
+}
 
 
 
 export default function Home({ route }) {
     const [data, setData] = useState(null)
-    const [categories,setCategories]=useState(null)
+    const [categories,setCategories]=useState([])
     // const [selectedCategories,setSelectedCategories]=useState(null)
 
     const [isLoading, setIsLoading] = useState(true)
@@ -25,6 +60,8 @@ export default function Home({ route }) {
     const [avatarImage, setAvatarImage] = useState(null)
     const userData = route.params.userData;
     const [filterSelections, setFilterSelections] = useState(null)
+    const [searchBarText, setSearchBarText] = useState('');
+    const [query, setQuery] = useState('');
     const avatarImageCall = async () => await AsyncStorage.getItem('image').then(response => setAvatarImage(response))
 
     avatarImageCall()
@@ -74,9 +111,9 @@ export default function Home({ route }) {
                 setData(menuItems);
                 setCategories([... new Set(menuItems.map(x=>x.category))])
                 // setFilterSelections()
+                // console.log([...new Set(menuItems.map(x=>x.category))],categories)
                 const filters = categories.reduce((o, key) => ({ ...o, [key]: false}), {})
                 setFilterSelections(filters)
-                console.log(filterSelections) 
                 setIsLoading(false)
             } catch (e) {
                 // Handle error
@@ -85,6 +122,43 @@ export default function Home({ route }) {
         })();
     }, [isLoading]);
 
+    useUpdateEffect(() => {
+        (async () => {
+
+          const activeCategories = categories.filter((s, i) => {
+            // If all filters are deselected, all categories are active
+            if (categories.every((item) => filterSelections[item] === false)) {
+            // console.log("all false, returning true")
+              return true;
+            }
+            // console.log("returning filterSelections[categories[i]]",filterSelections[categories[i]])
+
+            return filterSelections[categories[i]];
+          });
+          console.log(activeCategories,"activeCategories")
+          try {
+            const filteredItems = await filterByQueryAndCategories(
+              query,
+              activeCategories
+            );
+            // console.log(filteredItems,"menuitems after filter")
+            setData(filteredItems);
+          } catch (e) {
+            console.log("odd error ... correct sql but still promise returns callback error",e.message)
+          }
+        })();
+      }, [filterSelections, query]);
+    
+      const lookup = useCallback((q) => {
+        setQuery(q);
+      }, []);
+      const debouncedLookup = useMemo(() => debounce(lookup, 500), [lookup]);
+
+      const handleSearchChange = (text) => {
+        setSearchBarText(text);
+        debouncedLookup(text);
+      };
+    
 
     const Item = ({ title, image, description, price, category }) => {
         // console.log("category",category)
@@ -105,20 +179,11 @@ export default function Home({ route }) {
                 </View></View>
         );
     }
-    
-            // categories.forEach(element => {
-            //     console.log("hello",element)
-            // });
 
-                        
-                
-            
-            // <Pressable style={styles.categoryBtn}>
-            //             <Text style={styles.categoryBtnText}>Drinks</Text>
-            //         </Pressable>
     function capitalizeText(string){
         return string.charAt(0).toUpperCase() + string.slice(1)
     }
+   
     function MenuCategories() {
         return (
             <View>
@@ -130,7 +195,7 @@ export default function Home({ route }) {
                         <Text style={styles.categoryBtnText}>{capitalizeText(item)}</Text>
                     </Pressable>
                     )}
-                    { console.log(filterSelections)}
+                    { console.log("filterSelections",filterSelections)}
                     {/* <Pressable style={styles.categoryBtn}>
                         <Text style={styles.categoryBtnText}>Starters</Text>
                     </Pressable>
@@ -151,31 +216,17 @@ export default function Home({ route }) {
         )
     }
 
-    function HeroCardWithSearch() {
-        return (
-            <View style={styles.heroContainer}>
-                <Text style={styles.titleText}>Little Lemon</Text>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 15 }}>
-                    <View style={{ flexDirection: "column", flex: 0.75 }}>
-                        <Text style={styles.subTitleText}>Chicago</Text>
-                        <Text style={styles.copyText}>We are a family owned restaurant, focused on traditional recipes served with a modern twist.</Text>
-                    </View>
-                    <Image source={hero} style={styles.heroImage} resizeMode="cover" />
-                </View>
 
-                <Ionicons name="search-circle" size={64} color="#edefee" />
-
-            </View>
-        )
-    }
     if (isLoading) {
         return (<Splash />)
     }
     // console.log(new Set(data.map(x=>x.category))) 
     return (
-        <View style={defaultStyles.rootContainer}>
+        <SafeAreaView style={defaultStyles.rootContainer}>
             <Header style={defaultStyles.header} avatar={avatarImage} name={userData.name} />
-            <HeroCardWithSearch />
+            <HeroCardWithSearch 
+            onChangeText={handleSearchChange}
+            value={searchBarText} />
             <MenuCategories />
             {/* <MenuItems/> */}
             <FlatList
@@ -184,7 +235,7 @@ export default function Home({ route }) {
                 keyExtractor={item => item.name}
             />
 
-        </View>
+        </SafeAreaView>
     )
 }
 
@@ -257,7 +308,14 @@ const styles = StyleSheet.create({
         backgroundColor: "#f4ce14",
         padding: 10,
         marginHorizontal:10
-    },
+    },  
+    searchBar: {
+        backgroundColor: '#edefee',
+        shadowRadius: 0,
+        shadowOpacity: 0,
+
+        
+      },
     categoryBtnNotSelected: {
         borderRadius: 15,
         backgroundColor: "#edefee",
